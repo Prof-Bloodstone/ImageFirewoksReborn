@@ -53,7 +53,7 @@ public class CustomFirework
 	{
 		final Firework item = (Firework)center.getWorld().spawnEntity(center, EntityType.FIREWORK);
 		FireworkMeta fM = item.getFireworkMeta();
-		fM.setPower(2);
+		fM.setPower(20);
 		item.setFireworkMeta(fM);
 		final float yaw = center.getYaw();
 
