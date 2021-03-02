@@ -10,7 +10,7 @@ java {
 }
 
 group = "org.golde.bukkit.imagefireworksreborn"
-version = "1.4.0"
+version = "1.4.1"
 description = "This is a port of the plugin ImageFireworks by deantonious (https://www.spigotmc.org/resources/imagefireworks.18932/) that I have ported to Spigot 1.11.2 and below, and have added new features. Thanks to deantonious for letting me take over and manage his project ❤"
 
 repositories {

@@ -60,6 +60,7 @@ public class CustomFirework
 		new BukkitRunnable()
 		{
 			int timer = Main.plugin.getConfig().getInt("ticks-till-explode", 100);
+			int explode_height = (timer / 10 ) - 1;
 
 			public void run()
 			{
@@ -75,7 +76,7 @@ public class CustomFirework
 						item.remove();
 						cancel();
 					}
-					if (item.getLocation().getY() >= center.getY() + 10.0D)
+					if (item.getLocation().getY() >= center.getY() + explode_height)
 					{
 						Location loc = item.getLocation().clone();
 						loc.setY(loc.getY() + 4.0D);

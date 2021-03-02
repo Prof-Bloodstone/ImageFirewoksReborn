@@ -3,7 +3,9 @@ enable-update-checker: true
 
 #Number of ticks till the firework explode
 #((FlightPower + 1) * 10) for you math people out there
+# Increase it to increase explosion height
+# Each increase by 10 increases height by 1 block
 ticks-till-explode: 100
 
 #Number of ticks to display image for. 
-ticks-to-display-image-for: 30;
+ticks-to-display-image-for: 30
