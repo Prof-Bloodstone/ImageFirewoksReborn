@@ -7,10 +7,11 @@ import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 
-import org.bukkit.Bukkit;
+import com.destroystokyo.paper.ParticleBuilder;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
@@ -19,12 +20,9 @@ import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
-import org.inventivetalent.particle.ParticleEffect;
-
 @SuppressWarnings({ "rawtypes", "unchecked", "unused" })
 public class CustomFirework
 {
-	private final ParticleEffect particle = ParticleEffect.REDSTONE;
 	private Color color;
 	private String name;
 	private BufferedImage image;
@@ -124,14 +122,12 @@ public class CustomFirework
 						center.setY(yIni + rotated.getY());
 						center.setZ(zIni + rotated.getZ());
 
-						try
-						{
-							particle.sendColor(Bukkit.getOnlinePlayers(), center, new Color(firework.get(i).getColor().getRed(), firework.get(i).getColor().getGreen(), firework.get(i).getColor().getBlue()));
-						}
-						catch (Exception e)
-						{
-							e.printStackTrace();
-						}
+						final Color color = firework.get(i).getColor();
+						new ParticleBuilder(Particle.REDSTONE)
+								.color(org.bukkit.Color.fromRGB(color.getRed(), color.getGreen(), color.getBlue()))
+								.location(center)
+								.allPlayers()
+								.spawn();
 					}
 				}
 				else

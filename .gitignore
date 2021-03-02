@@ -6,3 +6,8 @@ doc/
 src/generatedoc.bat
 src/uploaddoc.bat
 BATCH/
+*.iml
+.idea
+.gradle
+debug
+build

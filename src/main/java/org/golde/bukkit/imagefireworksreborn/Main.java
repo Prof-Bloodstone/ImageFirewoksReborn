@@ -5,14 +5,21 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.function.Predicate;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
+import org.bukkit.block.data.type.Dispenser;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -25,11 +32,13 @@ import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class Main extends JavaPlugin implements Listener {
+	private final NamespacedKey fireworkNameKey = new NamespacedKey(this, "firework_name");
 	public static Main plugin;
 	public File dataFolder;
 	private String commandUse = ChatColor.RED + "Command Use: /imgfws <give:launch> <player> <firework>";
@@ -85,11 +94,7 @@ public class Main extends JavaPlugin implements Listener {
 	}
 	
 	void playSound(final Location center) {
-		if(getServerVersion().startsWith("v1_8") || getServerVersion().startsWith("v1_7")) {
-			center.getWorld().playSound(center, Sound.valueOf("FIREWORK_BLAST"), 3.0F, 1.0F);
-		}else {
-			center.getWorld().playSound(center, Sound.valueOf("ENTITY_FIREWORK_BLAST"), 3.0F, 1.0F);
-		}
+		center.getWorld().playSound(center, Sound.ENTITY_FIREWORK_ROCKET_BLAST, 3.0F, 1.0F);
 	}
 
 	public void onDisable() {}
@@ -123,13 +128,15 @@ public class Main extends JavaPlugin implements Listener {
 								File fwFile = new File(dataFolder + File.separator + "fireworks" + File.separator + (String)fireworkList.get(fwName.toLowerCase()));
 								FileConfiguration fw = YamlConfiguration.loadConfiguration(fwFile);
 
-								ItemStack iS = new ItemStack(Material.FIREWORK, 1);
+								ItemStack iS = new ItemStack(Material.FIREWORK_ROCKET, 1);
 								ItemMeta iM = iS.getItemMeta();
-								iM.setDisplayName(fw.getString("Name"));
+								final String name = Objects.requireNonNull(fw.getString("Name"));
+								iM.displayName(LegacyComponentSerializer.legacyAmpersand().deserialize(name));
+								iM.getPersistentDataContainer().set(fireworkNameKey, PersistentDataType.STRING, name.toLowerCase());
 								
-								ArrayList<String> iL = new ArrayList();
-								iL.add(ChatColor.RED + "Image Firework");
-								iM.setLore(iL);
+								ArrayList<Component> iL = new ArrayList();
+								iL.add(Component.text("Image Firework", NamedTextColor.RED));
+								iM.lore(iL);
 								iS.setItemMeta(iM);
 
 								target.getInventory().addItem(new ItemStack[] { iS });
@@ -232,19 +239,20 @@ public class Main extends JavaPlugin implements Listener {
 	public void onClick(PlayerInteractEvent event)
 	{
 		if ((event.getAction() == Action.RIGHT_CLICK_BLOCK) && 
-				(event.getItem() != null) && (event.getItem().hasItemMeta()) && 
-				(((String)event.getItem().getItemMeta().getLore().get(0)).equals(ChatColor.RED + "Image Firework")))
+				(event.getItem() != null) && (event.getItem().hasItemMeta()) &&
+				event.getItem().getItemMeta().getPersistentDataContainer().has(fireworkNameKey, PersistentDataType.STRING))
 		{
 			event.setCancelled(true);
-			if (fireworkList.containsKey(event.getItem().getItemMeta().getDisplayName().toLowerCase()))
+			final String name = event.getItem().getItemMeta().getPersistentDataContainer().get(fireworkNameKey, PersistentDataType.STRING);
+			if (fireworkList.containsKey(name))
 			{
-				CustomFirework cfw = new CustomFirework((String)fireworkList.get(event.getItem().getItemMeta().getDisplayName().toLowerCase()));
+				CustomFirework cfw = new CustomFirework(fireworkList.get(name.toLowerCase(Locale.ROOT)));
 				Location loc = event.getClickedBlock().getLocation();
 				loc.setY(loc.getY() + 1.0D);
 				loc.setYaw(event.getPlayer().getLocation().getYaw());
 				cfw.useFirework(loc);
 				if (event.getPlayer().getGameMode() != GameMode.CREATIVE) {
-					event.getPlayer().getInventory().removeItem(new ItemStack[] { event.getPlayer().getItemInHand() });
+					Objects.requireNonNull(event.getPlayer().getEquipment()).setItem(Objects.requireNonNull(event.getHand()), null);
 				}
 			}
 		}
@@ -253,24 +261,25 @@ public class Main extends JavaPlugin implements Listener {
 	@EventHandler
 	public void onDispenseFirework(BlockDispenseEvent event)
 	{
-		if ((event.getItem() != null) && (event.getItem().hasItemMeta()) && 
-				(((String)event.getItem().getItemMeta().getLore().get(0)).equals(ChatColor.RED + "Image Firework")))
+		if ((event.getItem() != null) && (event.getItem().hasItemMeta()) &&
+				event.getItem().getItemMeta().getPersistentDataContainer().has(fireworkNameKey, PersistentDataType.STRING))
 		{
 			event.setCancelled(true);
-			if (fireworkList.containsKey(event.getItem().getItemMeta().getDisplayName().toLowerCase()))
+			final String name = event.getItem().getItemMeta().getPersistentDataContainer().get(fireworkNameKey, PersistentDataType.STRING);
+			if (fireworkList.containsKey(name))
 			{
-				org.bukkit.material.Dispenser dispenserMaterial = (org.bukkit.material.Dispenser) event.getBlock().getState().getData();
+				//org.bukkit.material.Dispenser dispenserMaterial = (org.bukkit.material.Dispenser) event.getBlock().getState().getData();
 				org.bukkit.block.Dispenser dispenserBlock = (org.bukkit.block.Dispenser) event.getBlock().getState();
 
 				dispenserBlock.getInventory().removeItem(new ItemStack[] { event.getItem() });
-				CustomFirework cfw = new CustomFirework((String)fireworkList.get(event.getItem().getItemMeta().getDisplayName().toLowerCase()));
+				CustomFirework cfw = new CustomFirework(fireworkList.get(name.toLowerCase(Locale.ROOT)));
 				Location loc = event.getBlock().getLocation();
 				loc.setX(loc.getX() + 0.5D);
 				loc.setY(loc.getY() + 0.5D);
 				loc.setZ(loc.getZ() + 0.5D);
 
 				Vector offset;
-				switch(dispenserMaterial.getFacing()){
+				switch(((Dispenser) event.getBlock().getBlockData()).getFacing()){
 				case NORTH: loc.setYaw(180); offset = new Vector(0, 0, -1); break;
 				case SOUTH: loc.setYaw(0);   offset = new Vector(0, 0, 1);  break;
 				case EAST: loc.setYaw(-90);  offset = new Vector(1, 0, 0);  break;
@@ -303,6 +312,7 @@ public class Main extends JavaPlugin implements Listener {
 	}
 	
 	void checkForUpdates(){
+		/*
 		Updater updater = new Updater("38203"); 
 		Updater.UpdateResults result = updater.checkForUpdates();
 		if(result.getResult() == Updater.UpdateResult.FAIL)
@@ -316,13 +326,14 @@ public class Main extends JavaPlugin implements Listener {
 		}
 		else if(result.getResult() == Updater.UpdateResult.UPDATE_AVAILABLE)
 		{
-			Bukkit.getConsoleSender().sendMessage("[ImageFireworksReborn] §aAn update for ImageFireworksReborn has been found!");
-			Bukkit.getConsoleSender().sendMessage("[ImageFireworksReborn] §bCurrent version: §e" + getDescription().getVersion() + "§b, new version: §e" + result.getVersion());
+			Bukkit.getConsoleSender().sendMessage("[ImageFireworksReborn] An update for ImageFireworksReborn has been found!");
+			Bukkit.getConsoleSender().sendMessage("[ImageFireworksReborn] Current version: " + getDescription().getVersion() + ", new version: " + result.getVersion());
 		}
 		else if (result.getResult() == Updater.UpdateResult.DEV){
-			Bukkit.getConsoleSender().sendMessage("[ImageFireworksReborn] §eYou seem to have a version of the plugin that is not on spigot...");
-			Bukkit.getConsoleSender().sendMessage("[ImageFireworksReborn] §cExpect bugs!");
+			Bukkit.getConsoleSender().sendMessage("[ImageFireworksReborn] You seem to have a version of the plugin that is not on spigot...");
+			Bukkit.getConsoleSender().sendMessage("[ImageFireworksReborn] Expect bugs!");
 		}
+		*/
 	}
 
 }
