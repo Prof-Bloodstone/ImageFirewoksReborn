@@ -102,6 +102,7 @@ public class CustomFirework
 		final int yIni = center.getBlockY();
 		final int zIni = center.getBlockZ();
 		final double rot = center.getYaw();
+		final int frequency = Main.plugin.getConfig().getInt("ticks-between-image-update", 3);
 
 		new BukkitRunnable()
 		{
@@ -111,7 +112,7 @@ public class CustomFirework
 			{
 				if (this.times > 0)
 				{
-					this.times -= 1;
+					this.times -= 3;
 					for (int i = 0; i < firework.size(); i++)
 					{
 						Vector v = new Vector((firework.get(i).getLoc()).getX() / 5.0D, (firework.get(i).getLoc()).getY() / 5.0D, 0);
@@ -136,7 +137,7 @@ public class CustomFirework
 					cancel();
 				}
 			}
-		}.runTaskTimer(Main.plugin, 0L, 0L);
+		}.runTaskTimer(Main.plugin, 0L, frequency-1);
 	}
 
 	private Vector rotateVector(Vector v, double angleInDegrees)

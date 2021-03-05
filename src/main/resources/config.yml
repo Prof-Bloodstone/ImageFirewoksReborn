@@ -9,3 +9,6 @@ ticks-till-explode: 100
 
 #Number of ticks to display image for. 
 ticks-to-display-image-for: 30
+
+# How often should the particles be sent
+ticks-between-image-update: 3
